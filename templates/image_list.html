@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block breadcrumbs %}
+<li class="breadcrumb-item"><a href="#">Unindexed images</a></li>
+{% endblock %}
+{% block onload %}
+onload="tableInitialize();"
+{% endblock %}
+{% block content %}
+  <h2>{{ numimages }} images awaiting indexing</h1>
+<a href="{{ urlroot }}unindexed/download" class="badge badge-pill badge-info" style="color: #fff;">Download tab-delimited file of images</a>
+<br><br>
+  <table id="images" class="tablesorter standard">
+    <thead>
+    <tr>
+      <th>Image name</th>
+      <th>Line</th>
+      <th>Slide code</th>
+      <th>Data set</th>
+      <th>Imager</th>
+      <th>TMOG time</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for row in result %}
+    <tr>
+      <td> {{ row[0]|safe }} </td>
+      <td> {{ row[1]|safe }} </td>
+      <td> {{ row[2]|safe }} </td>
+      <td> {{ row[3] }} </td>
+      <td> {{ row[4] }} </td>
+      <td> {{ row[5] }} </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+  </table>
+{% endblock %}

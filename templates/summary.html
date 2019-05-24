@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block onload %}
+onload="tableInitialize();"
+{% endblock %}
+{% block content %}
+  <h2>Samples by status</h2>
+  {% for row in statusrows %}
+    <{{ row[0] }} role="button" class="btn btn-{{ row[2] }}" href="{{ row[1] }}">
+      <span style="color: #fff;">{{ row[3] }}</span> <span class="badge badge-light">{{ row[4] }}</span>
+    </{{ row[0] }}>
+  {% endfor %}
+<br>
+<div style="width: 700px">
+Click on any of the above to get a list of samples. To return data in a timely manner, only statuses
+with <= {{ download }} samples can be retrieved. If there are between {{ display }} and {{ download }}
+samples, a tab-delimited file will be downloaded. For {{ display }} samples or less, a list of samples
+with details will be displayed.
+</div>
+  <br><br>
+
+  <h2>Samples in process</h2>
+  <h3>Available JACS servers: {{ available|safe }}</h3>
+  <table id="servers" class="tablesorter standard">
+  <thead>
+  <tr><th>Server</th><th>Queued</th><th>On cluster</th></tr>
+  </thead>
+  <tbody>
+  {% for row in procrows %}
+    <tr><td>{{ row[0]|safe }}</td>
+    <td style="text-align: center">{{ row[1] }}</td>
+    <td style="text-align: center">{{ row[2] }}</td></tr>
+  {% endfor %}
+  </tbody>
+  </table>
+{% endblock %}

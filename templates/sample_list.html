@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block breadcrumbs %}
+<li class="breadcrumb-item"><a href="#">Status</a></li>
+{% endblock %}
+{% block onload %}
+onload="tableInitialize();"
+{% endblock %}
+{% block content %}
+  <h2>{{ numsamples }} samples in {{ status }} status</h1>
+<a href="{{ urlroot }}status/download/{{status }}" class="badge badge-pill badge-info" style="color: #fff;">Download tab-delimited file of samples</a>
+<br><br>
+  <table id="samples" class="tablesorter standard">
+    <thead>
+    <tr>
+      <th>Sample name</th>
+      <th>Line</th>
+      <th>Slide code</th>
+      <th>Data set</th>
+      <th>Owner</th>
+      <th>Start time</th>
+      <th>Elapsed time</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for row in result %}
+    <tr>
+      <td> {{ row[0]|safe }} </td>
+      <td> {{ row[1]|safe }} </td>
+      <td> {{ row[2]|safe }} </td>
+      <td> {{ row[3] }} </td>
+      <td> {{ row[4] }} </td>
+      <td> {{ row[5] }} </td>
+      <td> {{ row[6]|safe }} </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+  </table>
+{% endblock %}
