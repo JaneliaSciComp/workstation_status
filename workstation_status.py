@@ -1,11 +1,9 @@
 from datetime import datetime, timezone
 import sys
 from time import time
-#import threading
 import concurrent.futures
 from flask import Flask, render_template, request, jsonify, Response
 from flask_swagger import swagger
-#import pytz
 import requests
 from requests_html import HTMLSession
 
