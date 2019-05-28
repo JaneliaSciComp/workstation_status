@@ -143,7 +143,7 @@ def show_summary():
                 link = request.url_root + 'unindexed'
                 show = 'a'
                 color = 'primary'
-            statusrows.append([show, link, color, 'Indexing', response['rest']['row_count']])
+            statusrows.append([show, link, color, 'TMOGged', response['rest']['row_count']])
     # Status counts
     response = call_responder('jacs', 'info/sample?totals=true')
     for status in response:
@@ -254,8 +254,8 @@ def show_status(status):
       200:
           description: Sample list
     '''
-    if status not in app.config['STATUSES']:
-        return render_template('sample_none.html', urlroot=request.url_root, status=status)
+    #if status not in app.config['STATUSES']:
+    #    return render_template('sample_none.html', urlroot=request.url_root, status=status)
     result = []
     response = call_responder('jacs', 'info/sample?totals=false&status=' + status)
     newlist = sorted(response, key=lambda k: k['updatedDate'], reverse=True)
