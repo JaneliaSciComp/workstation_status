@@ -131,44 +131,40 @@ def get_doc_json():
 
 @app.route('/')
 def show_summary():
-    statusrows = []
     # Avaiting indexing
+    statusdict = dict()
+    tmp = '<div class="status"><%s role="button" class="btn btn-%s" href="%s"><span style="color: #fff;">%s</span> <span class="badge badge-light">%s</span></%s></div>'
+    link = '#'
+    show = 'button'
+    this_count = 0
+    status = 'TMOGged'
     if app.config['SHOW_UNINDEXED']:
         response = call_responder('sage', 'unindexed_images')
-        if 'rest' in response and 'row_count' in response['rest']:
-            color = 'dark'
-            link = '#'
-            show = 'button'
-            if response['rest']['row_count']:
-                link = request.url_root + 'unindexed'
-                show = 'a'
-                color = 'primary'
-            statusrows.append([show, link, color, 'TMOGged', response['rest']['row_count']])
+        if response['rest']['row_count']:
+            link = request.url_root + 'unindexed'
+            show = 'a'
+            this_count = response['rest']['row_count']
+    statusdict[status.lower()] = tmp % (show, 'primary', link, status, this_count, show)
     # Status counts
     response = call_responder('jacs', 'info/sample?totals=true')
     found = dict()
     for status in response:
         found[status['_id']] = status['count']
-    statusdict = dict()
-    #  <{{ row[0] }} role="button" class="btn btn-{{ row[2] }}" href="{{ row[1] }}">
-    #    <span style="color: #fff;">{{ row[3] }}</span> <span class="badge badge-light">{{ row[4] }}</span>
-    #  </{{ row[0] }}>
-    print(response)
-    tmp = '<div class="status"><%s role="button" class="btn btn-%s"><span style="color: #fff;">%s</span> <span class="badge badge-light">%s</span></%s></div>'
     for status in app.config['STATUS_ORDER']:
-        this_id = status
+        if status == 'TMOGged':
+            continue
         this_count = 0
-        if this_id in found:
-            this_count = found[this_id]
+        if status in found:
+            this_count = found[status]
         color = 'dark'
         link = '#'
         show = 'button'
-        if this_count <= app.config['LIMIT_DOWNLOAD']:
-            link = request.url_root + 'status/' + this_id
+        if this_count and (this_count <= app.config['LIMIT_DOWNLOAD']):
+            link = request.url_root + 'status/' + status
             show = 'a'
-        if this_id in app.config['STATUS_COLOR']:
-            color = app.config['STATUS_COLOR'][this_id]
-        statusdict[this_id.lower()] = tmp % (show, color, this_id, this_count, show)
+        if status in app.config['STATUS_COLOR']:
+            color = app.config['STATUS_COLOR'][status]
+        statusdict[status.lower()] = tmp % (show, color, link, status, this_count, show)
     # Processing status
     with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
         executor.map(call_jmx, app.config['HOST_NUMBERS'])
