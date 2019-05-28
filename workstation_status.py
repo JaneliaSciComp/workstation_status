@@ -146,16 +146,29 @@ def show_summary():
             statusrows.append([show, link, color, 'TMOGged', response['rest']['row_count']])
     # Status counts
     response = call_responder('jacs', 'info/sample?totals=true')
+    found = dict()
     for status in response:
+        found[status['_id']] = status['count']
+    statusdict = dict()
+    #  <{{ row[0] }} role="button" class="btn btn-{{ row[2] }}" href="{{ row[1] }}">
+    #    <span style="color: #fff;">{{ row[3] }}</span> <span class="badge badge-light">{{ row[4] }}</span>
+    #  </{{ row[0] }}>
+    print(response)
+    tmp = '<div class="status"><%s role="button" class="btn btn-%s"><span style="color: #fff;">%s</span> <span class="badge badge-light">%s</span></%s></div>'
+    for status in app.config['STATUS_ORDER']:
+        this_id = status
+        this_count = 0
+        if this_id in found:
+            this_count = found[this_id]
         color = 'dark'
         link = '#'
         show = 'button'
-        if status['count'] <= app.config['LIMIT_DOWNLOAD']:
-            link = request.url_root + 'status/' + status['_id']
+        if this_count <= app.config['LIMIT_DOWNLOAD']:
+            link = request.url_root + 'status/' + this_id
             show = 'a'
-        if status['_id'] in app.config['STATUS_COLOR']:
-            color = app.config['STATUS_COLOR'][status['_id']]
-        statusrows.append([show, link, color, status['_id'], status['count']])
+        if this_id in app.config['STATUS_COLOR']:
+            color = app.config['STATUS_COLOR'][this_id]
+        statusdict[this_id.lower()] = tmp % (show, color, this_id, this_count, show)
     # Processing status
     with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
         executor.map(call_jmx, app.config['HOST_NUMBERS'])
@@ -179,7 +192,7 @@ def show_summary():
     available = len(app.config['HOST_NUMBERS']) - bad
     color = '#f90;' if bad else '#9f0;'
     available = '<span style="color: %s">%s/%s</span>' % (color, str(available), str(len(app.config['HOST_NUMBERS'])))
-    return render_template('summary.html', urlroot=request.url_root, statusrows=statusrows,
+    return render_template('summary.html', urlroot=request.url_root, statuses=statusdict,
                            available=available, procrows=procrows, display=app.config['LIMIT_DISPLAY'],
                            download=app.config['LIMIT_DOWNLOAD'])
 
