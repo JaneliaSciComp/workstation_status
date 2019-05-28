@@ -1,3 +1,5 @@
+.a-new { background-color: #660099; }
+.btn-new { background-color: #660099; }
 .listcontainer {display: grid;
                 grid-template-rows: 40px 25px 40px 25px 40px 25px 40px 25px 40px;
                 grid-template-columns: 165px 20px 165px 600px;
