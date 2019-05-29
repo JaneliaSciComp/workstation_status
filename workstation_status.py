@@ -32,7 +32,11 @@ def before_request():
     app.config['ENDPOINTS'][endpoint] = app.config['ENDPOINTS'].get(endpoint, 0) + 1
     if 'jacs' not in CONFIG:
         data = call_responder('config', 'config/rest_services')
-        CONFIG = data['config']
+        try:
+            CONFIG = data['config']
+        except Exception as err:
+            return render_template('error.html', urlroot=request.url_root,
+                                    message='No response from configuration server %s' % CONFIG['config']['url'])
 
 # ******************************************************************************
 # * Utility functions                                                          *
@@ -43,11 +47,15 @@ def call_responder(server, endpoint):
     try:
         req = requests.get(url)
     except requests.exceptions.RequestException as err: # pragma no cover
-        print(err)
-        sys.exit(-1)
-    if req.status_code == 200:
-        return req.json()
-    sys.exit(-1)
+        return render_template('error.html', urlroot=request.url_root,
+                               message=err)
+    try:
+        if req.status_code == 200:
+            return req.json()
+    except:
+        return render_template('error.html', urlroot=request.url_root,
+                               message=("Bad response from %s: status code=%d" % (CONFIG[server]['url'], req.status_code)))
+
 
 def call_jmx(hostnum):
     session = HTMLSession()
@@ -61,6 +69,7 @@ def call_jmx(hostnum):
     except: # pragma no cover
         err = 1
     host_status[hostnum] = [err, qdepth, ipmc]
+
 
 def generate_sample_list(status, newlist, text_only, result):
     for sample in newlist:
@@ -98,6 +107,7 @@ def generate_sample_list(status, newlist, text_only, result):
             slide_link = ''
         result.append([name_link, line_link, slide_link, response[0]['dataSet'], owner, timestamp, etime])
 
+
 def generate_image_list(newlist, text_only, result):
     for image in newlist:
         line_link = image['line']
@@ -118,9 +128,11 @@ def generate_image_list(newlist, text_only, result):
 def show_swagger():
     return render_template('swagger_ui.html')
 
+
 @app.route("/spec")
 def spec():
     return get_doc_json()
+
 
 @app.route('/doc')
 def get_doc_json():
@@ -128,6 +140,7 @@ def get_doc_json():
     swag['info']['version'] = __version__
     swag['info']['title'] = "Workstation status"
     return jsonify(swag)
+
 
 @app.route('/')
 def show_summary():
@@ -192,6 +205,7 @@ def show_summary():
                            available=available, procrows=procrows, display=app.config['LIMIT_DISPLAY'],
                            download=app.config['LIMIT_DOWNLOAD'])
 
+
 @app.route('/unindexed')
 def show_unindexed():
     '''
@@ -222,6 +236,7 @@ def show_unindexed():
                            numimages=response['rest']['row_count'],
                            result=result)
 
+
 @app.route('/unindexed/download/')
 def download_unindexed():
     '''
@@ -244,6 +259,7 @@ def download_unindexed():
     return Response(generate(), mimetype='text/csv',
                     headers={"Content-Disposition":
                              "attachment;filename=images.tsv"})
+
 
 @app.route('/status/<status>')
 def show_status(status):
@@ -286,6 +302,7 @@ def show_status(status):
     return render_template('sample_list.html', urlroot=request.url_root,
                            numsamples=len(newlist),
                            status=status, result=result)
+
 
 @app.route('/status/download/<status>')
 def download_status(status):
