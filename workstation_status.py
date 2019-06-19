@@ -84,10 +84,15 @@ def generate_sample_list(status, newlist, text_only, result):
         if days:
             etime = "%d day%s, %s" % (days, '' if days == 1 else 's', etime)
         if not text_only:
+            selected = int(days - 1)
+            if selected < 0:
+                selected = 0
+            elif selected > 9:
+                selected = 9
             if status == 'Queued' and (days > 0):
-                etime = '<span style="color:#f90;">' + etime + '</span>'
+                etime = '<span style="color:#' +  app.config['GRADIENT'][selected] + ';">' + etime + '</span>'
             elif status == 'Processing' and (days > 0 or hours > app.config['PROCESSING_LIMIT']):
-                etime = '<span style="color:#f90;">' + etime + '</span>'
+                etime = '<span style="color:#' +  app.config['GRADIENT'][selected] + ';">' + etime + '</span>'
         owner = sample['ownerKey'].split(':')[1]
         response = call_responder('jacs', 'info/sample/search?name=' + sample['name'])
         name_link = sample['name']
