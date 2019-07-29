@@ -1,0 +1,32 @@
+version: "3.7"
+services:
+  nginx:
+    image: nginx:1.15-alpine
+    ports:
+      - 80:80
+      - 443:443
+    restart: unless-stopped
+    depends_on:
+      - app
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+      - static_volume:/static
+      # - /etc/int_cert:/etc/nginx/ssl/
+    networks:
+      - workstation-status-net
+  app:
+    image: registry.int.janelia.org/jacs/workstation-status
+    restart: unless-stopped
+    volumes:
+        - static_volume:/static
+    environment:
+      - PYTHONUNBUFFERED=1
+    networks:
+        - workstation-status-net
+
+networks:
+  workstation-status-net:
+      driver: bridge
+
+volumes:
+  static_volume:
