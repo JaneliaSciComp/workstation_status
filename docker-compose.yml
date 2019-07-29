@@ -11,7 +11,7 @@ services:
     networks:
         - workstation-status-net
     ports:
-      - 80:8000
+      - 81:8000
 
 networks:
   workstation-status-net:
