@@ -1,3 +1,7 @@
+''' workstation_status.py
+    Flask app to siaplay Fly Light image processing pipeline status
+'''
+
 from datetime import datetime, timezone
 from time import time
 import concurrent.futures
@@ -25,6 +29,9 @@ HOST_STATUS = dict()
 
 @app.before_request
 def before_request():
+    ''' If needed, initilize global variables.
+    '''
+    # pylint: disable=W0603
     global CONFIG
     app.config['COUNTER'] += 1
     endpoint = request.endpoint if request.endpoint else '(Unknown)'
@@ -43,6 +50,11 @@ def before_request():
 # ******************************************************************************
 
 def call_responder(server, endpoint):
+    ''' Call a responder
+        Keyword arguments:
+          server: server
+          endpoint: REST endpoint
+    '''
     url = CONFIG[server]['url'] + endpoint
     try:
         req = requests.get(url)
@@ -59,6 +71,10 @@ def call_responder(server, endpoint):
 
 
 def call_jmx(hostnum):
+    ''' Call JMX to get host stats
+        Keyword arguments:
+          hostnum: host number
+    '''
     session = HTMLSession()
     url = app.config['HOST_PREFIX'] + str(hostnum) + app.config['HOST_SUFFIX']
     err = ipmc = qdepth = 0
@@ -73,6 +89,14 @@ def call_jmx(hostnum):
 
 
 def get_status_count(status, found, show, tmp, statusdict):
+    ''' Get in-process count for a given status
+        Keyword arguments:
+          status: process status
+          found: found dictionary (contains count)
+          show: HTML for button or link
+          tmp: template
+          statusdict: status dictionary
+    '''
     this_count = 0
     if status in found:
         this_count = found[status]
@@ -90,6 +114,8 @@ def get_status_count(status, found, show, tmp, statusdict):
 
 
 def get_processing_status():
+    ''' Get count stats for JACS hosts
+    '''
     with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
         executor.map(call_jmx, app.config['HOST_NUMBERS'])
     procrows = []
@@ -115,7 +141,14 @@ def get_processing_status():
                                                           str(len(app.config['HOST_NUMBERS'])))
     return available, procrows
 
+
 def get_elapsed_time(sample, status, text_only):
+    ''' Get elapsed time (update time -> now)
+        Keyword arguments:
+          sampls: sample dictionary
+          status: process status
+          text_only: not HTML styles if true
+    '''
     locpdt = datetime.strptime(sample['updatedDate'], TIME_PATTERN)
     locpdt = locpdt.replace(tzinfo=timezone.utc).astimezone(tz=LOCAL_TIMEZONE)
     timestamp = locpdt.strftime(TIME_PATTERN).split('.')[0].replace('T', ' ')
@@ -142,6 +175,13 @@ def get_elapsed_time(sample, status, text_only):
 
 
 def generate_sample_list(status, newlist, text_only, result):
+    ''' Generate a list of samples for a given status
+        Keyword arguments:
+          status: process status
+          newlist: sprted list of samples
+          text_only: not HTML styles if true
+          result: result array
+    '''
     for sample in newlist:
         (timestamp, etime) = get_elapsed_time(sample, status, text_only)
         owner = sample['ownerKey'].split(':')[1]
@@ -188,16 +228,22 @@ def generate_image_list(newlist, text_only, result):
 
 @app.route("/help")
 def show_swagger():
+    ''' Show documentation
+    '''
     return render_template('swagger_ui.html')
 
 
 @app.route("/spec")
 def spec():
+    ''' Show specification
+    '''
     return get_doc_json()
 
 
 @app.route('/doc')
 def get_doc_json():
+    ''' Show documentation
+    '''
     swag = swagger(app)
     swag['info']['version'] = __version__
     swag['info']['title'] = "Fly Light Image Processing Pipeline"
@@ -206,6 +252,8 @@ def get_doc_json():
 
 @app.route('/')
 def show_summary():
+    ''' Default route
+    '''
     # Avaiting indexing
     statusdict = dict()
     tmp = '<div class="status"><%s role="button" class="btn btn-%s" href="%s">' \
@@ -313,8 +361,8 @@ def show_status(status):
       200:
           description: Sample list
     '''
-    #if status not in app.config['STATUSES']:
-    #    return render_template('sample_none.html', urlroot=request.url_root, status=status)
+    if status not in app.config['STATUSES']:
+        return render_template('sample_none.html', urlroot=request.url_root, status=status)
     result = []
     response = call_responder('jacs', 'info/sample?totals=false&status=' + status)
     newlist = sorted(response, key=lambda k: k['updatedDate'], reverse=True)
