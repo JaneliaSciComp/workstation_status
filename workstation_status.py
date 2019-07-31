@@ -10,6 +10,7 @@ from flask_swagger import swagger
 import requests
 from requests_html import HTMLSession
 
+# pylint: disable=C0103,W0703,R1710
 
 __version__ = '0.1.0'
 app = Flask(__name__)
@@ -38,12 +39,13 @@ def before_request():
     app.config['ENDPOINTS'][endpoint] = app.config['ENDPOINTS'].get(endpoint, 0) + 1
     if 'jacs' not in CONFIG:
         data = call_responder('config', 'config/rest_services')
-        try:
+        if 'config' in data:
             CONFIG = data['config']
-        except Exception as err:
+        else:
             return render_template('error.html', urlroot=request.url_root,
                                    message='No response from configuration server %s' \
                                    % CONFIG['config']['url'])
+
 
 # ******************************************************************************
 # * Utility functions                                                          *
@@ -62,9 +64,8 @@ def call_responder(server, endpoint):
         return render_template('error.html', urlroot=request.url_root,
                                message=err)
     try:
-        if req.status_code == 200:
-            return req.json()
-    except:
+        return req.json()
+    except Exception as err:
         return render_template('error.html', urlroot=request.url_root,
                                message=("Bad response from %s: status code=%d" \
                                % (CONFIG[server]['url'], req.status_code)))
@@ -83,7 +84,7 @@ def call_jmx(hostnum):
         tbl = req.html.find('table')[4]
         ipmc = tbl.find('tr')[1].find('td')[3].text
         qdepth = tbl.find('tr')[9].find('td')[3].text
-    except: # pragma no cover
+    except Exception as err:
         err = 1
     HOST_STATUS[hostnum] = [err, qdepth, ipmc]
 
@@ -109,7 +110,7 @@ def get_status_count(status, found, show, tmp, statusdict):
     if status in app.config['STATUS_COLOR']:
         color = app.config['STATUS_COLOR'][status]
     if not this_count:
-        this_count = '<span style="color: #bbb">0</span>'
+        this_count = '<span style="color: #aaa">0</span>'
     statusdict[status.lower()] = tmp % (show, color, link, status, this_count, show)
 
 
@@ -210,6 +211,12 @@ def generate_sample_list(status, newlist, text_only, result):
 
 
 def generate_image_list(newlist, text_only, result):
+    ''' Generate a list of unindexed from SAGE
+        Keyword arguments:
+          newlist: sprted list of samples
+          text_only: not HTML styles if true
+          result: result array
+    '''
     for image in newlist:
         line_link = image['line']
         if not text_only:
@@ -221,6 +228,7 @@ def generate_image_list(newlist, text_only, result):
             slide_link = "<a href=%s target=_blank>%s</a>" % (addr, slide_link)
         result.append([image['name'], line_link, slide_link, image['data_set'],
                        image['created_by'], image['create_date']])
+
 
 # *****************************************************************************
 # * Endpoints                                                                 *
@@ -270,7 +278,7 @@ def show_summary():
             show = 'a'
             this_count = response['rest']['row_count']
         if not this_count:
-            this_count = '<span style="color: #bbb">0</span>'
+            this_count = '<span style="color: #aaa">0</span>'
     statusdict[status.lower()] = tmp % (show, 'primary', link, status, this_count, show)
     # Status counts
     response = call_responder('jacs', 'info/sample?totals=true')
