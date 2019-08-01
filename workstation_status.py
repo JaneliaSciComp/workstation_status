@@ -12,7 +12,7 @@ from requests_html import HTMLSession
 
 # pylint: disable=C0103,W0703,R1710
 
-__version__ = '0.1.0'
+__version__ = '0.2.0'
 app = Flask(__name__)
 app.config.from_pyfile("config.cfg")
 app.config['STARTTIME'] = time()
@@ -22,6 +22,7 @@ CONFIG = {'config': {'url': app.config['CONFIG_ROOT']}}
 LOCAL_TIMEZONE = datetime.now(timezone.utc).astimezone().tzinfo
 TIME_PATTERN = '%Y-%m-%dT%H:%M:%S.%f%z'
 HOST_STATUS = dict()
+SERVER = dict()
 
 
 # *****************************************************************************
@@ -33,7 +34,7 @@ def before_request():
     ''' If needed, initilize global variables.
     '''
     # pylint: disable=W0603
-    global CONFIG
+    global CONFIG, SERVER
     app.config['COUNTER'] += 1
     endpoint = request.endpoint if request.endpoint else '(Unknown)'
     app.config['ENDPOINTS'][endpoint] = app.config['ENDPOINTS'].get(endpoint, 0) + 1
@@ -43,9 +44,15 @@ def before_request():
             CONFIG = data['config']
         else:
             return render_template('error.html', urlroot=request.url_root,
-                                   message='No response from configuration server %s' \
-                                   % CONFIG['config']['url'])
-
+                                   message='No response from configuration server %s for %s' \
+                                   % (CONFIG['config']['url'], 'reset_services'))
+        data = call_responder('config', 'config/servers')
+        if 'config' in data:
+            SERVER = data['config']
+        else:
+            return render_template('error.html', urlroot=request.url_root,
+                                   message='No response from configuration server %s for %s' \
+                                    % (CONFIG['config']['url'], 'reset_services'))
 
 # ******************************************************************************
 # * Utility functions                                                          *
@@ -189,20 +196,19 @@ def generate_sample_list(status, newlist, text_only, result):
         response = call_responder('jacs', 'info/sample/search?name=' + sample['name'])
         name_link = sample['name']
         if not text_only:
-            addr = 'http://webstation.int.janelia.org/search?term=' + name_link
+            addr = SERVER['webstation']['address'] + '/search?term=' + name_link
             name_link = "<a href=%s target=_blank>%s</a>" % (addr, name_link)
         if 'line' in response[0]:
             line_link = response[0]['line']
             if not text_only:
-                addr = app.config['INFORMATICS'] + '/cgi-bin/lineman.cgi?line=' + line_link
+                addr = SERVER['informatics']['address'] + '/cgi-bin/lineman.cgi?line=' + line_link
                 line_link = "<a href=%s target=_blank>%s</a>" % (addr, line_link)
         else:
             line_link = ''
         if 'slideCode' in response[0]:
             slide_link = response[0]['slideCode']
             if not text_only:
-                addr = app.config['INFORMATICS'] \
-                       + '/slide_search.php?term=slide_code&id=' + slide_link
+                addr = SERVER['webstation']['address'] + '/search?term=' + slide_link
                 slide_link = "<a href=%s target=_blank>%s</a>" % (addr, slide_link)
         else:
             slide_link = ''
@@ -220,11 +226,11 @@ def generate_image_list(newlist, text_only, result):
     for image in newlist:
         line_link = image['line']
         if not text_only:
-            addr = app.config['INFORMATICS'] + '/cgi-bin/lineman.cgi?line=' + line_link
+            addr = SERVER['informatics']['address'] + '/cgi-bin/lineman.cgi?line=' + line_link
             line_link = "<a href=%s target=_blank>%s</a>" % (addr, line_link)
         slide_link = image['slide_code']
         if not text_only:
-            addr = app.config['INFORMATICS'] + '/slide_search.php?term=slide_code&id=' + slide_link
+            addr = SERVER['webstation']['address'] + '/search?term=' + slide_link
             slide_link = "<a href=%s target=_blank>%s</a>" % (addr, slide_link)
         result.append([image['name'], line_link, slide_link, image['data_set'],
                        image['created_by'], image['create_date']])
