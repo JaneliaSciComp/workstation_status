@@ -137,12 +137,21 @@ def get_processing_status():
         (unavailable, qdepth, ipmc) = HOST_STATUS[hostnum]
         qtot += int(qdepth)
         ctot += int(ipmc)
-        procrows.append([host_link, qdepth, ipmc])
         if unavailable:
             bad += 1
             qdepth = ipmc = '-'
+            status = 'DOWN'
+            color = '#f90;'
+        elif int(ipmc):
+            status = 'Active'
+            color = '#9f0';
+        else:
+            status = 'Idle'
+            color = '#09f';
+        status = '<span style="color: %s">%s</span>' % (color, status)
+        procrows.append([host_link, qdepth, ipmc, status])
     if procrows:
-        procrows.append(['TOTAL', qtot, ctot])
+        procrows.append(['TOTAL', qtot, ctot, ''])
     available = len(app.config['HOST_NUMBERS']) - bad
     color = '#f90;' if bad else '#9f0;'
     available = '<span style="color: %s">%s/%s</span>' % (color, str(available),
