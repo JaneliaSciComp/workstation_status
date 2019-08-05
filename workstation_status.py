@@ -144,10 +144,10 @@ def get_processing_status():
             color = '#f90;'
         elif int(ipmc):
             status = 'Active'
-            color = '#9f0';
+            color = '#9f0'
         else:
             status = 'Idle'
-            color = '#09f';
+            color = '#09f'
         status = '<span style="color: %s">%s</span>' % (color, status)
         procrows.append([host_link, qdepth, ipmc, status])
     if procrows:
