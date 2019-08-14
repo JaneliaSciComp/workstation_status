@@ -288,6 +288,10 @@ def show_summary():
     status = 'TMOGged'
     if app.config['SHOW_UNINDEXED']:
         response = call_responder('sage', 'unindexed_images')
+        if 'row_count' not in response['rest']:
+            return render_template('error.html', urlroot=request.url_root,
+                                   message='Invalid response from %s for %s' \
+                                    % ('SAGE responder', 'unindexed_images'))
         if response['rest']['row_count']:
             link = request.url_root + 'unindexed'
             show = 'a'
