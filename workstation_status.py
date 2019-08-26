@@ -93,6 +93,7 @@ def call_jmx(hostnum):
         qdepth = tbl.find('tr')[9].find('td')[3].text
     except Exception as err:
         err = 1
+        HOST_STATUS[hostnum] = [err, qdepth, ipmc]
     HOST_STATUS[hostnum] = [err, qdepth, ipmc]
 
 
