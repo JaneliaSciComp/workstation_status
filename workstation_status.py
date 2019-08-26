@@ -141,7 +141,7 @@ def get_processing_status():
         if unavailable:
             bad += 1
             qdepth = ipmc = '-'
-            status = 'DOWN'
+            status = 'OFFLINE'
             color = '#f90;'
         elif int(ipmc):
             status = 'Active'
