@@ -93,6 +93,7 @@ def call_jmx(hostnum):
         qdepth = tbl.find('tr')[9].find('td')[3].text
     except Exception as err:
         err = 1
+        HOST_STATUS[hostnum] = [err, qdepth, ipmc]
     HOST_STATUS[hostnum] = [err, qdepth, ipmc]
 
 
@@ -140,7 +141,7 @@ def get_processing_status():
         if unavailable:
             bad += 1
             qdepth = ipmc = '-'
-            status = 'DOWN'
+            status = 'OFFLINE'
             color = '#f90;'
         elif int(ipmc):
             status = 'Active'
