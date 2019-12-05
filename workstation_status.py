@@ -84,6 +84,7 @@ def call_jmx(hostnum):
           hostnum: host number
     '''
     session = HTMLSession()
+    print("Fetching info for " + app.config['HOST_PREFIX'] + str(hostnum))
     url = app.config['HOST_PREFIX'] + str(hostnum) + app.config['HOST_SUFFIX']
     err = ipmc = qdepth = 0
     try:
@@ -91,9 +92,11 @@ def call_jmx(hostnum):
         tbl = req.html.find('table')[4]
         ipmc = tbl.find('tr')[1].find('td')[3].text
         qdepth = tbl.find('tr')[9].find('td')[3].text
+    except futures._base.TimeoutError:
+        HOST_STATUS[hostnum] = [2, 0, 0]
     except Exception as err:
-        err = 1
-        HOST_STATUS[hostnum] = [err, qdepth, ipmc]
+        HOST_STATUS[hostnum] = [1, qdepth, ipmc]
+    print("Got info for " + app.config['HOST_PREFIX'] + str(hostnum))
     HOST_STATUS[hostnum] = [err, qdepth, ipmc]
 
 
@@ -125,8 +128,10 @@ def get_status_count(status, found, show, tmp, statusdict):
 def get_processing_status():
     ''' Get count stats for JACS hosts
     '''
+    for hostnum in app.config['HOST_NUMBERS']:
+        HOST_STATUS[hostnum] = [2, -1, -1]
     with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
-        executor.map(call_jmx, app.config['HOST_NUMBERS'])
+        executor.map(call_jmx, app.config['HOST_NUMBERS'], timeout=20)
     procrows = []
     qtot = 0
     ctot = 0
@@ -141,8 +146,12 @@ def get_processing_status():
         if unavailable:
             bad += 1
             qdepth = ipmc = '-'
-            status = 'OFFLINE'
-            color = '#f90;'
+            if unavailable == 1:
+                status = 'OFFLINE'
+                color = '#f90;'
+            else:
+                status = 'TIMEOUT'
+                color = '#f40;'
         elif int(ipmc):
             status = 'Active'
             color = '#9f0'
@@ -293,6 +302,7 @@ def show_summary():
             return render_template('error.html', urlroot=request.url_root,
                                    message='Invalid response from %s for %s' \
                                     % ('SAGE responder', 'unindexed_images'))
+        print("SAGE call: %s" % (response['rest']['elapsed_time']))
         if response['rest']['row_count']:
             link = request.url_root + 'unindexed'
             show = 'a'
