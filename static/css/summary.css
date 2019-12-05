@@ -1,12 +1,15 @@
 .a-new { background-color: #660099; }
 .btn-new { background-color: #660099; }
 .btn-new:hover { background-color: #550088; }
+.a-scheduled { background-color: #330099; }
+.btn-scheduled { background-color: #330099; }
+.btn-scheduled:hover { background-color: #220088; }
 .a-queued { background-color: #c08800; }
 .btn-queued { background-color: #c08800; }
 .btn-queued:hover { background-color: #b07700; }
 .listcontainer {display: grid;
                 grid-template-rows: 40px 25px 40px 25px 40px 25px 40px 25px 40px;
-                grid-template-columns: 165px 20px 165px 600px;
+                grid-template-columns: 165px 20px 165px 610px;
 }
 .status {width: 150px;
          text-align: center;
@@ -36,10 +39,20 @@
          grid-column-start: 1;
          grid-column-end: 1;
 }
+.left1 {grid-row-start: 5;
+        grid-row-end: 5;
+        grid-column-start: 2;
+        grid-column-end: 2;
+}
 .down3 {grid-row-start: 6;
         grid-row-end: 6;
         grid-column-start: 1;
         grid-column-end: 1;
+}
+.Scheduled {grid-row-start: 5;
+            grid-row-end: 5;
+            grid-column-start: 3;
+            grid-column-end: 3;
 }
 .Processing {grid-row-start: 7;
              grid-row-end: 7;
