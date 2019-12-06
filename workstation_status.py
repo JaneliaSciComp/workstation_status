@@ -8,6 +8,7 @@ import concurrent.futures
 from flask import Flask, render_template, request, jsonify, Response
 from flask_swagger import swagger
 import requests
+from requests.exceptions import Timeout
 from requests_html import HTMLSession
 
 # pylint: disable=C0103,W0703,R1710
@@ -84,20 +85,19 @@ def call_jmx(hostnum):
           hostnum: host number
     '''
     session = HTMLSession()
-    print("Fetching info for " + app.config['HOST_PREFIX'] + str(hostnum))
     url = app.config['HOST_PREFIX'] + str(hostnum) + app.config['HOST_SUFFIX']
     err = ipmc = qdepth = 0
     try:
-        req = session.get(url)
+        req = session.get(url, timeout=1)
         tbl = req.html.find('table')[4]
         ipmc = tbl.find('tr')[1].find('td')[3].text
         qdepth = tbl.find('tr')[9].find('td')[3].text
-    except futures._base.TimeoutError:
+        print("Got info for " + app.config['HOST_PREFIX'] + str(hostnum))
+        HOST_STATUS[hostnum] = [err, qdepth, ipmc]
+    except Timeout:
         HOST_STATUS[hostnum] = [2, 0, 0]
     except Exception as err:
         HOST_STATUS[hostnum] = [1, qdepth, ipmc]
-    print("Got info for " + app.config['HOST_PREFIX'] + str(hostnum))
-    HOST_STATUS[hostnum] = [err, qdepth, ipmc]
 
 
 def get_status_count(status, found, show, tmp, statusdict):
