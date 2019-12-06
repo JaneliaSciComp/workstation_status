@@ -88,7 +88,7 @@ def call_jmx(hostnum):
     url = app.config['HOST_PREFIX'] + str(hostnum) + app.config['HOST_SUFFIX']
     err = ipmc = qdepth = 0
     try:
-        req = session.get(url, timeout=15)
+        req = session.get(url, timeout=10)
         tbl = req.html.find('table')[4]
         ipmc = tbl.find('tr')[1].find('td')[3].text
         qdepth = tbl.find('tr')[9].find('td')[3].text
