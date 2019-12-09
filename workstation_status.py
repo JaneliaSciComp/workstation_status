@@ -2,7 +2,7 @@
     Flask app to siaplay Fly Light image processing pipeline status
 '''
 
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from time import time
 import concurrent.futures
 from flask import Flask, render_template, request, jsonify, Response
@@ -287,6 +287,8 @@ def get_doc_json():
 def show_summary():
     ''' Default route
     '''
+    START_TIME = time()
+    print('Received request %s' % (datetime.now()))
     # Avaiting indexing
     statusdict = dict()
     tmp = '<div class="status"><%s role="button" class="btn btn-%s" href="%s">' \
@@ -297,7 +299,7 @@ def show_summary():
     this_count = 0
     status = 'TMOGged'
     if app.config['SHOW_UNINDEXED']:
-        response = call_responder('sage', 'unindexed_images')
+        response = call_responder('sage', 'unindexed_images/fast')
         if 'row_count' not in response['rest']:
             return render_template('error.html', urlroot=request.url_root,
                                    message='Invalid response from %s for %s' \
@@ -320,6 +322,7 @@ def show_summary():
             continue
         get_status_count(status, found, show, tmp, statusdict)
     (available, procrows) = get_processing_status()
+    print("Elapsed time: %s" % (str(timedelta(seconds=(time()-START_TIME)))))
     return render_template('summary.html', urlroot=request.url_root, statuses=statusdict,
                            available=available, procrows=procrows,
                            display=app.config['LIMIT_DISPLAY'],
