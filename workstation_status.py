@@ -3,6 +3,7 @@
 '''
 
 from datetime import datetime, timezone, timedelta
+import json
 from time import time
 import concurrent.futures
 from flask import Flask, render_template, request, jsonify, Response
@@ -13,7 +14,7 @@ from requests_html import HTMLSession
 
 # pylint: disable=C0103,W0703,R1710
 
-__version__ = '0.2.0'
+__version__ = '0.3.0'
 app = Flask(__name__)
 app.config.from_pyfile("config.cfg")
 app.config['STARTTIME'] = time()
@@ -316,7 +317,14 @@ def show_summary():
     response = call_responder('jacs', 'info/sample?totals=true')
     found = dict()
     for status in response:
-        found[status['_id']] = status['count']
+        msg = "Bad response from %s %s" % ('/'.join([CONFIG['jacs']['url'],
+                                                     'info/sample?totals=true']),
+                                           json.dumps(response))
+        try:
+            found[status['_id']] = status['count']
+        except Exception as err:
+            return render_template('error.html', urlroot=request.url_root,
+                                   message='%s: %s' % (type(err).__name__, msg))
     for status in app.config['STATUS_ORDER']:
         if status == 'TMOGged':
             continue
