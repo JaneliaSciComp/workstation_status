@@ -14,7 +14,7 @@ from requests_html import HTMLSession
 
 # pylint: disable=C0103,W0703,R1710
 
-__version__ = '0.3.0'
+__version__ = '0.4.0'
 app = Flask(__name__)
 app.config.from_pyfile("config.cfg")
 app.config['STARTTIME'] = time()
@@ -41,14 +41,24 @@ def before_request():
     endpoint = request.endpoint if request.endpoint else '(Unknown)'
     app.config['ENDPOINTS'][endpoint] = app.config['ENDPOINTS'].get(endpoint, 0) + 1
     if 'jacs' not in CONFIG:
-        data = call_responder('config', 'config/rest_services')
+        try:
+            data = call_responder('config', 'config/rest_services')
+        except Exception as err:
+            return render_template('error.html', urlroot=request.url_root,
+                                   message='Invalid response from %s for %s: %s' \
+                                   % ('configuration server', 'rest_services', str(err)))
         if 'config' in data:
             CONFIG = data['config']
         else:
             return render_template('error.html', urlroot=request.url_root,
                                    message='No response from configuration server %s for %s' \
                                    % (CONFIG['config']['url'], 'reset_services'))
-        data = call_responder('config', 'config/servers')
+        try:
+            data = call_responder('config', 'config/servers')
+        except Exception as err:
+            return render_template('error.html', urlroot=request.url_root,
+                                   message='Invalid response from %s for %s: %s' \
+                                   % ('configuration server', 'servers', str(err)))
         if 'config' in data:
             SERVER = data['config']
         else:
@@ -75,9 +85,10 @@ def call_responder(server, endpoint):
     try:
         return req.json()
     except Exception as err:
-        return render_template('error.html', urlroot=request.url_root,
-                               message=("Bad response from %s: status code=%d" \
-                               % (CONFIG[server]['url'], req.status_code)))
+        msg = "Bad response from %s/%s: status code=%d" \
+              % (CONFIG[server]['url'], endpoint, req.status_code)
+        print(msg)
+        raise Exception(msg)
 
 
 def call_jmx(hostnum):
@@ -300,11 +311,16 @@ def show_summary():
     this_count = 0
     status = 'TMOGged'
     if app.config['SHOW_UNINDEXED']:
-        response = call_responder('sage', 'unindexed_images/fast')
+        try:
+            response = call_responder('sage', 'unindexed_images/fast')
+        except Exception as err:
+            return render_template('error.html', urlroot=request.url_root,
+                                   message='Invalid response from %s for %s: %s' \
+                                   % ('SAGE responder', 'unindexed_images', str(err)))
         if 'row_count' not in response['rest']:
             return render_template('error.html', urlroot=request.url_root,
                                    message='Invalid response from %s for %s' \
-                                    % ('SAGE responder', 'unindexed_images'))
+                                   % ('SAGE responder', 'unindexed_images'))
         print("SAGE call: %s" % (response['rest']['elapsed_time']))
         if response['rest']['row_count']:
             link = request.url_root + 'unindexed'
@@ -314,12 +330,17 @@ def show_summary():
             this_count = '<span style="color: #aaa">0</span>'
     statusdict[status.lower()] = tmp % (show, 'primary', link, status, this_count, show)
     # Status counts
-    response = call_responder('jacs', 'info/sample?totals=true')
+    try:
+        response = call_responder('jacs', 'info/sample?totals=true')
+    except Exception as err:
+        return render_template('error.html', urlroot=request.url_root,
+                               message='Invalid response getting status counts: %s' \
+                               % (str(err)))
     found = dict()
+    msg = "Bad response from %s %s" \
+          % ('/'.join([CONFIG['jacs']['url'], 'info/sample?totals=true']),
+             json.dumps(response))
     for status in response:
-        msg = "Bad response from %s %s" % ('/'.join([CONFIG['jacs']['url'],
-                                                     'info/sample?totals=true']),
-                                           json.dumps(response))
         try:
             found[status['_id']] = status['count']
         except Exception as err:
