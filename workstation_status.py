@@ -14,7 +14,7 @@ from requests_html import HTMLSession
 
 # pylint: disable=C0103,W0703,R1710,W0707
 
-__version__ = '0.4.0'
+__version__ = '0.5.0'
 app = Flask(__name__)
 app.config.from_pyfile("config.cfg")
 app.config['STARTTIME'] = time()
@@ -312,16 +312,18 @@ def show_summary():
     status = 'TMOGged'
     if app.config['SHOW_UNINDEXED']:
         try:
+            print("Getting unindexed images")
             response = call_responder('sage', 'unindexed_images/fast')
         except Exception as err:
             return render_template('error.html', urlroot=request.url_root,
                                    message='Invalid response from %s for %s: %s' \
                                    % ('SAGE responder', 'unindexed_images', str(err)))
-        if 'row_count' not in response['rest']:
+        if 'rest' not in response or 'row_count' not in response['rest']:
             return render_template('error.html', urlroot=request.url_root,
                                    message='Invalid response from %s for %s' \
                                    % ('SAGE responder', 'unindexed_images'))
         print("SAGE call: %s" % (response['rest']['elapsed_time']))
+        this_count = 0
         if response['rest']['row_count']:
             link = request.url_root + 'unindexed'
             show = 'a'
