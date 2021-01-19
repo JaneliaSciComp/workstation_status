@@ -12,7 +12,7 @@ import requests
 from requests.exceptions import Timeout
 from requests_html import HTMLSession
 
-# pylint: disable=C0103,W0703,R1710
+# pylint: disable=C0103,W0703,R1710,W0707
 
 __version__ = '0.4.0'
 app = Flask(__name__)
