@@ -32,7 +32,7 @@ docker push registry.int.janelia.org/jacs/workstation-status
 Take the following steps to start the system:
 ```
 cd /opt/flask/workstation_status
-docker-compose up -d
+docker-compose -f docker-compose-prod.yml up -d
 ```
 
 ## Author Information
