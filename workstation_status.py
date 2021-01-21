@@ -14,7 +14,7 @@ from requests_html import HTMLSession
 
 # pylint: disable=C0103,W0703,R1710,W0707
 
-__version__ = '0.5.0'
+__version__ = '0.6.0'
 app = Flask(__name__)
 app.config.from_pyfile("config.cfg")
 app.config['STARTTIME'] = time()
@@ -25,7 +25,6 @@ LOCAL_TIMEZONE = datetime.now(timezone.utc).astimezone().tzinfo
 TIME_PATTERN = '%Y-%m-%dT%H:%M:%S.%f%z'
 HOST_STATUS = dict()
 SERVER = dict()
-
 
 # *****************************************************************************
 # * Flask                                                                     *
@@ -70,18 +69,18 @@ def before_request():
 # * Utility functions                                                          *
 # ******************************************************************************
 
-def call_responder(server, endpoint):
+def call_responder(server, endpoint, timeout=None):
     ''' Call a responder
         Keyword arguments:
           server: server
           endpoint: REST endpoint
+          timeout: timeout in seconds
     '''
     url = CONFIG[server]['url'] + endpoint
     try:
-        req = requests.get(url)
+        req = requests.get(url, timeout=timeout)
     except requests.exceptions.RequestException as err: # pragma no cover
-        return render_template('error.html', urlroot=request.url_root,
-                               message=err)
+        raise Exception(str(err))
     try:
         return req.json()
     except Exception as err:
@@ -267,6 +266,27 @@ def generate_image_list(newlist, text_only, result):
                        image['created_by'], image['create_date']])
 
 
+def get_unindexed_images(fast=False, timeout=15):
+    ''' Get unindexed images from the SAGE responder
+        Keyword arguments:
+          fast: use "/fast" variant
+          timeout: timeout in seconds
+    '''
+    endpoint = 'unindexed_images'
+    if fast:
+        endpoint += '/fast'
+    try:
+        print("Getting unindexed images")
+        response = call_responder('sage', endpoint, timeout)
+    except Exception as err:
+        msg = 'Invalid response from %s for %s: %s' \
+              % ('SAGE responder', 'unindexed_images', str(err))
+        print(msg)
+        raise Exception(msg)
+    print("SAGE call: %s" % (response['rest']['elapsed_time']))
+    return response
+
+
 # *****************************************************************************
 # * Endpoints                                                                 *
 # *****************************************************************************
@@ -312,17 +332,14 @@ def show_summary():
     status = 'TMOGged'
     if app.config['SHOW_UNINDEXED']:
         try:
-            print("Getting unindexed images")
-            response = call_responder('sage', 'unindexed_images/fast')
+            response = get_unindexed_images(True)
         except Exception as err:
             return render_template('error.html', urlroot=request.url_root,
-                                   message='Invalid response from %s for %s: %s' \
-                                   % ('SAGE responder', 'unindexed_images', str(err)))
+                                   message=str(err))
         if 'rest' not in response or 'row_count' not in response['rest']:
             return render_template('error.html', urlroot=request.url_root,
                                    message='Invalid response from %s for %s' \
                                    % ('SAGE responder', 'unindexed_images'))
-        print("SAGE call: %s" % (response['rest']['elapsed_time']))
         this_count = 0
         if response['rest']['row_count']:
             link = request.url_root + 'unindexed'
@@ -373,7 +390,11 @@ def show_unindexed():
           description: Image list
     '''
     result = []
-    response = call_responder('sage', 'unindexed_images')
+    try:
+        response = get_unindexed_images(False, 30)
+    except Exception as err:
+        return render_template('error.html', urlroot=request.url_root,
+                               message=str(err))
     text_only = False
     if response['rest']['row_count'] > app.config['LIMIT_DISPLAY']:
         text_only = True
@@ -404,7 +425,11 @@ def download_unindexed():
           description: Image list
     '''
     result = []
-    response = call_responder('sage', 'unindexed_images')
+    try:
+        response = get_unindexed_images(False, 30)
+    except Exception as err:
+        return render_template('error.html', urlroot=request.url_root,
+                               message=str(err))
     generate_image_list(response['images'], True, result)
     def generate():
         result.insert(0, app.config['IMAGE_HEADER'])
