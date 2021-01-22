@@ -14,7 +14,7 @@ from requests_html import HTMLSession
 
 # pylint: disable=C0103,W0703,R1710,W0707
 
-__version__ = '0.6.0'
+__version__ = '0.7.0'
 app = Flask(__name__)
 app.config.from_pyfile("config.cfg")
 app.config['STARTTIME'] = time()
@@ -266,7 +266,7 @@ def generate_image_list(newlist, text_only, result):
                        image['created_by'], image['create_date']])
 
 
-def get_unindexed_images(fast=False, timeout=15):
+def get_unindexed_images(fast=False, timeout=20):
     ''' Get unindexed images from the SAGE responder
         Keyword arguments:
           fast: use "/fast" variant
