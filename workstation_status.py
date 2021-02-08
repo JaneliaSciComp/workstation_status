@@ -14,7 +14,7 @@ from requests_html import HTMLSession
 
 # pylint: disable=C0103,W0703,R1710,W0707
 
-__version__ = '0.7.0'
+__version__ = '0.7.1'
 app = Flask(__name__)
 app.config.from_pyfile("config.cfg")
 app.config['STARTTIME'] = time()
@@ -142,7 +142,7 @@ def get_processing_status():
     for hostnum in app.config['HOST_NUMBERS']:
         HOST_STATUS[hostnum] = [2, -1, -1]
     with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
-        executor.map(call_jmx, app.config['HOST_NUMBERS'], timeout=20)
+        executor.map(call_jmx, app.config['HOST_NUMBERS'], timeout=35)
     procrows = []
     qtot = 0
     ctot = 0
@@ -266,7 +266,7 @@ def generate_image_list(newlist, text_only, result):
                        image['created_by'], image['create_date']])
 
 
-def get_unindexed_images(fast=False, timeout=20):
+def get_unindexed_images(fast=False, timeout=35):
     ''' Get unindexed images from the SAGE responder
         Keyword arguments:
           fast: use "/fast" variant
@@ -391,7 +391,7 @@ def show_unindexed():
     '''
     result = []
     try:
-        response = get_unindexed_images(False, 30)
+        response = get_unindexed_images(False, 35)
     except Exception as err:
         return render_template('error.html', urlroot=request.url_root,
                                message=str(err))
@@ -426,7 +426,7 @@ def download_unindexed():
     '''
     result = []
     try:
-        response = get_unindexed_images(False, 30)
+        response = get_unindexed_images(False, 35)
     except Exception as err:
         return render_template('error.html', urlroot=request.url_root,
                                message=str(err))
