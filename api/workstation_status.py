@@ -141,6 +141,7 @@ def get_processing_status():
     '''
     for hostnum in app.config['HOST_NUMBERS']:
         HOST_STATUS[hostnum] = [2, -1, -1]
+    print("Calling JMX")
     with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
         executor.map(call_jmx, app.config['HOST_NUMBERS'], timeout=35)
     procrows = []

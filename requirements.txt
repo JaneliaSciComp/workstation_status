@@ -1,5 +1,0 @@
-Flask>=1.0.2
-flask-swagger>=0.2.14
-gunicorn>=19.9.0
-requests>=2.22.0
-requests_html
