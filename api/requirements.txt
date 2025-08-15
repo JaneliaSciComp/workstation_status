@@ -6,3 +6,4 @@ PyJWT
 PyMySQL
 requests
 requests_html
+lxml_html_clean
