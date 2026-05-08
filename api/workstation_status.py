@@ -1,9 +1,11 @@
 ''' workstation_status.py
     Flask app to siaplay Fly Light image processing pipeline status
 '''
+# PATCHED: Configurator dependency removed - loads config from local /config/*.json files
 
 from datetime import datetime, timezone, timedelta
 import json
+import os
 from time import time
 import concurrent.futures
 from flask import Flask, render_template, request, jsonify, Response
@@ -14,13 +16,28 @@ from requests_html import HTMLSession
 
 # pylint: disable=C0103,W0703,R1710,W0707
 
-__version__ = '0.7.2'
+
+def _load_config(name):
+    """Load config from local JSON file (replaces configurator call)"""
+    config_path = os.path.join('/config', f'{name}.json')
+    if os.path.exists(config_path):
+        with open(config_path) as f:
+            return json.load(f)
+    # Fallback: try relative path (for local dev)
+    config_path = os.path.join('config', f'{name}.json')
+    if os.path.exists(config_path):
+        with open(config_path) as f:
+            return json.load(f)
+    raise FileNotFoundError(f"Config file not found: {name}.json")
+
+
+__version__ = '1.0.0'
 app = Flask(__name__)
 app.config.from_pyfile("config.cfg")
 app.config['STARTTIME'] = time()
 app.config['STARTDT'] = datetime.now()
 # Configuration
-CONFIG = {'config': {'url': app.config['CONFIG_ROOT']}}
+CONFIG = {}
 LOCAL_TIMEZONE = datetime.now(timezone.utc).astimezone().tzinfo
 TIME_PATTERN = '%Y-%m-%dT%H:%M:%S.%f%z'
 HOST_STATUS = dict()
@@ -41,29 +58,22 @@ def before_request():
     app.config['ENDPOINTS'][endpoint] = app.config['ENDPOINTS'].get(endpoint, 0) + 1
     if 'jacs' not in CONFIG:
         try:
-            data = call_responder('config', 'config/rest_services')
+            # PATCHED: Load from local config files instead of configurator
+            CONFIG = _load_config('rest_services')
+            print("CONFIG")
+            print(', '.join(CONFIG.keys()))
         except Exception as err:
             return render_template('error.html', urlroot=request.url_root,
-                                   message='Invalid response from %s for %s: %s' \
-                                   % ('configuration server', 'rest_services', str(err)))
-        if 'config' in data:
-            CONFIG = data['config']
-        else:
-            return render_template('error.html', urlroot=request.url_root,
-                                   message='No response from configuration server %s for %s' \
-                                   % (CONFIG['config']['url'], 'reset_services'))
+                                   message='Could not load rest_services config: %s' \
+                                   % (str(err),))
         try:
-            data = call_responder('config', 'config/servers')
+            SERVER = _load_config('servers')
+            print("SERVER")
+            print(', '.join(SERVER.keys()))
         except Exception as err:
             return render_template('error.html', urlroot=request.url_root,
-                                   message='Invalid response from %s for %s: %s' \
-                                   % ('configuration server', 'servers', str(err)))
-        if 'config' in data:
-            SERVER = data['config']
-        else:
-            return render_template('error.html', urlroot=request.url_root,
-                                   message='No response from configuration server %s for %s' \
-                                    % (CONFIG['config']['url'], 'reset_services'))
+                                   message='Could not load servers config: %s' \
+                                   % (str(err),))
 
 # ******************************************************************************
 # * Utility functions                                                          *

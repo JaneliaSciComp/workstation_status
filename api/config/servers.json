@@ -1,0 +1,10 @@
+{
+  "informatics": {
+    "address": "http://informatics-prod.int.janelia.org",
+    "description": "Informatics web server"
+  },
+  "webstation": {
+    "address": "http://webstation.int.janelia.org",
+    "description": "Webstation"
+  }
+}

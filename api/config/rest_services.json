@@ -1,0 +1,39 @@
+{
+  "jacs": {
+    "query": {
+      "Blockview": "info/sample/blockview",
+      "CycleTime": "info/lsmstack/cycletime",
+      "DatasetPipeline": "data/dataset/pipeline",
+      "Datasets": "data/dataset/all",
+      "Entity": "info/lsmstack/name",
+      "ErrorMIPs": "info/sample/errormips",
+      "LSMImages": "info/lsmstack/images",
+      "PipelineStatus": "info/sample/pipelinestatus",
+      "ProcessingErrors": "info/sample/errors",
+      "SageImagery": "info/dataset/sageimagery",
+      "SampleAging": "info/sample?status=Processing",
+      "SampleAttribute": "info/sample/custom",
+      "SampleErrors": "info/dataset/sampleerrors",
+      "SampleErrorsAll": "info/sample/errors",
+      "SampleEvents": "info/tasks/events",
+      "SampleImage": "info/sample/image",
+      "SampleImageSearch": "info/sample/imagecompletion",
+      "SampleJSON": "data/sample",
+      "SampleLSMs": "data/sample/lsms",
+      "SampleSearch": "info/sample/search",
+      "SampleStatus": "info/sample?totals=true",
+      "StatusCounts": "info/sample/statuscounts",
+      "TasksLatest": "info/tasks/latest",
+      "WorkstationStatus": "info/sample/workstationstatus"
+    },
+    "url": "http://jacs-data.int.janelia.org:8180/rest-v3/"
+  },
+  "sage": {
+    "query": {
+      "Blockview": "info/sample/blockview",
+      "CycleTime": "info/lsmstack/cycletime",
+      "WorkstationStatus": "info/sample/workstationstatus"
+    },
+    "url": "https://sage-responder.int.janelia.org/"
+  }
+}
